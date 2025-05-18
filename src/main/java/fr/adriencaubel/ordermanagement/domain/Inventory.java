@@ -22,4 +22,17 @@ public class Inventory {
     private int stock;
 
     private LocalDate lastUpdate;
+
+    public void decreaseStock(int quantity) {
+        if (quantity <= 0) {
+            throw new IllegalArgumentException("Quantity must be positive");
+        }
+
+        if (stock < quantity) {
+            throw new IllegalStateException("Item out of stock");
+        }
+
+        stock -= quantity;
+        lastUpdate = LocalDate.now();
+    }
 }

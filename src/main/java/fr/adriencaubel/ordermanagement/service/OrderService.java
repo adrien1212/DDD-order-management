@@ -8,10 +8,9 @@ import fr.adriencaubel.ordermanagement.model.OrderItemRequestModel;
 import fr.adriencaubel.ordermanagement.model.OrderRequestModel;
 import fr.adriencaubel.ordermanagement.repository.CustomerRepository;
 import fr.adriencaubel.ordermanagement.repository.OrderRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-
-import java.time.LocalDate;
 
 @Service
 @RequiredArgsConstructor
@@ -26,6 +25,7 @@ public class OrderService {
         return orderRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Order not found"));
     }
 
+    @Transactional
     public Order placeOrder(OrderRequestModel orderRequestModel) {
         Customer customer = customerRepository.findById(orderRequestModel.getCustomerId())
             .orElseThrow(() -> new IllegalArgumentException("Customer not found"));
@@ -36,12 +36,8 @@ public class OrderService {
 
         for (OrderItemRequestModel dto : orderRequestModel.getItems()) {
             Inventory inventory = inventoryService.getInventoryByArticleId(dto.getArticleId());
-            if (inventory.getStock() < dto.getQuantity()) {
-                throw new IllegalStateException("Item out of stock");
-            } else {
-                inventory.setStock(inventory.getStock() - dto.getQuantity());
-                inventory.setLastUpdate(LocalDate.now());
-            }
+
+            inventory.decreaseStock(dto.getQuantity());
 
             Article article = articleService.getArticle(dto.getArticleId());
 
