@@ -5,6 +5,7 @@ import fr.adriencaubel.ordermanagement.model.OrderItemRequestModel;
 import fr.adriencaubel.ordermanagement.model.OrderRequestModel;
 import fr.adriencaubel.ordermanagement.repository.CustomerRepository;
 import fr.adriencaubel.ordermanagement.repository.OrderRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -24,6 +25,7 @@ public class OrderService {
         return orderRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Order not found"));
     }
 
+    @Transactional
     public Order placeOrder(OrderRequestModel orderRequestModel) {
         Customer customer = customerRepository.findById(orderRequestModel.getCustomerId())
             .orElseThrow(() -> new IllegalArgumentException("Customer not found"));
