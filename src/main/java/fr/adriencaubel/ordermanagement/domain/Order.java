@@ -25,4 +25,28 @@ public class Order {
     private List<OrderItem> items = new ArrayList<>();
 
     private BigDecimal total = BigDecimal.ZERO;
+
+    public void addItem(Article article, int quantity, boolean isVip) {
+        if (article == null) {
+            throw new IllegalArgumentException("Article cannot be null");
+        }
+        if (quantity <= 0) {
+            throw new IllegalArgumentException("Quantity must be positive");
+        }
+
+        BigDecimal lineTotal = article.getPrice().multiply(BigDecimal.valueOf(quantity));
+        if(isVip) {
+            lineTotal = lineTotal.multiply(new BigDecimal("0.95"));
+        }
+
+        OrderItem orderItem = new OrderItem();
+        orderItem.setArticle(article);
+        orderItem.setQuantity(quantity);
+        orderItem.setPrice(article.getPrice());
+        orderItem.setLineTotal(lineTotal);
+        orderItem.setOrder(this);
+        items.add(orderItem);
+
+        total = total.add(lineTotal);
+    }
 }

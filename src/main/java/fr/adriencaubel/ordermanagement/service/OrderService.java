@@ -1,14 +1,17 @@
 package fr.adriencaubel.ordermanagement.service;
 
-import fr.adriencaubel.ordermanagement.domain.*;
+import fr.adriencaubel.ordermanagement.domain.Article;
+import fr.adriencaubel.ordermanagement.domain.Customer;
+import fr.adriencaubel.ordermanagement.domain.Inventory;
+import fr.adriencaubel.ordermanagement.domain.Order;
 import fr.adriencaubel.ordermanagement.model.OrderItemRequestModel;
 import fr.adriencaubel.ordermanagement.model.OrderRequestModel;
 import fr.adriencaubel.ordermanagement.repository.CustomerRepository;
 import fr.adriencaubel.ordermanagement.repository.OrderRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Service
@@ -24,6 +27,7 @@ public class OrderService {
         return orderRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Order not found"));
     }
 
+    @Transactional
     public Order placeOrder(OrderRequestModel orderRequestModel) {
         Customer customer = customerRepository.findById(orderRequestModel.getCustomerId())
             .orElseThrow(() -> new IllegalArgumentException("Customer not found"));
@@ -32,7 +36,6 @@ public class OrderService {
         Order order = new Order();
         order.setCustomer(customer);
 
-        BigDecimal total = BigDecimal.ZERO;
         for (OrderItemRequestModel dto : orderRequestModel.getItems()) {
             Inventory inventory = inventoryService.getInventoryByArticleId(dto.getArticleId());
             if (inventory.getStock() < dto.getQuantity()) {
@@ -43,27 +46,9 @@ public class OrderService {
             }
 
             Article article = articleService.getArticle(dto.getArticleId());
-            BigDecimal price = article.getPrice();
-            BigDecimal lineTotal = price.multiply(BigDecimal.valueOf(dto.getQuantity()));
-            if (customer.isVip()) {
-                lineTotal = lineTotal.multiply(new BigDecimal("0.95")); // 5% discount for VIPs
-            }
 
-            // Add the item to the order
-            OrderItem orderItem = new OrderItem();
-            orderItem.setArticle(article);
-            orderItem.setQuantity(dto.getQuantity());
-            orderItem.setPrice(price);
-            orderItem.setLineTotal(lineTotal);
-            orderItem.setOrder(order);
-
-            order.getItems().add(orderItem);
-
-            total = total.add(lineTotal);
+            order.addItem(article, dto.getQuantity() , customer.isVip());
         }
-
-        // Set the total of the order
-        order.setTotal(total);
 
         return orderRepository.save(order);
     }
